@@ -317,21 +317,28 @@ def admin_delete_image(image_id):
 # Student Routes
 @app.route('/student/register', methods=['GET', 'POST'])
 def student_register():
+    import re
     if request.method == 'POST':
         roll_no = request.form['roll_no']
         email = request.form['email']
         name = request.form['name']
         password = request.form['password']
-        
+
+        # Roll number format validation (e.g., 23F01A0540)
+        roll_pattern = r'^\d{2}[A-Z]\d{2}[A-Z]\d{4}$'
+        if not re.match(roll_pattern, roll_no):
+            flash('Invalid roll number format! Format should be like 23F01A0540.', 'error')
+            return render_template('student_register.html')
+
         # Check if student already exists
         if students_collection.find_one({'roll_no': roll_no}):
             flash('Student with this roll number already exists!', 'error')
             return render_template('student_register.html')
-        
+
         if students_collection.find_one({'email': email}):
             flash('Student with this email already exists!', 'error')
             return render_template('student_register.html')
-        
+
         student_data = {
             'roll_no': roll_no,
             'email': email,
@@ -339,11 +346,11 @@ def student_register():
             'password': generate_password_hash(password),
             'created_at': datetime.now()
         }
-        
+
         students_collection.insert_one(student_data)
         flash('Registration successful! Please login.', 'success')
         return redirect(url_for('student_login'))
-    
+
     return render_template('student_register.html')
 
 @app.route('/student/login', methods=['GET', 'POST'])
